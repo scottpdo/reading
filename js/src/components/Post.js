@@ -8,13 +8,14 @@ class Post extends React.Component {
 
     render() {
 
-        let req = new XMLHttpRequest();
-        
+        let content = {
+            __html: this.props.post.content
+        };
 
         return (
             <div>
-                <h1>{this.props.title}</h1>
-                {content}
+                <h1>{this.props.post.title}</h1>
+                <div dangerouslySetInnerHTML={content} />
             </div>
         );
     }

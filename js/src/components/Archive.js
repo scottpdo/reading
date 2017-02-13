@@ -11,12 +11,12 @@ class Archive extends React.Component {
     render() {
 
         let posts = this.props.posts.map(post => {
-            return (
-                <Post title={post.title} key={post.id} />;
-            );
+            return <Post post={post} key={post.id} />;
         });
 
-        return {posts};
+        return (
+            <div>{posts}</div>
+        );
     }
 }
 
