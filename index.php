@@ -15,7 +15,10 @@
             id: '<?php the_ID(); ?>',
             permalink: '<?php the_permalink(); ?>',
             title: '<?php the_title(); ?>',
-            content: '<?= $content; ?>'
+            content: '<?= $content; ?>',
+            opts: {
+                showLink: true
+            }
         });
         </script>
     <?php }

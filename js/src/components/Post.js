@@ -1,20 +1,35 @@
 import React from 'react';
+import axios from 'axios';
 
 class Post extends React.Component {
 
     constructor() {
         super();
+
+        this.state = {
+            updating: false
+        };
+    }
+
+    update(e) {
+        console.log('updating', e);
     }
 
     render() {
 
+        let post = this.props.post;
+
+        let title = this.props.showLink ?
+            <h1><a href={post.permalink}>{post.title}</a></h1> :
+            <h1>{post.title}</h1>;
+
         let content = {
-            __html: this.props.post.content
+            __html: post.content
         };
 
         return (
             <div>
-                <h1>{this.props.post.title}</h1>
+                {title}
                 <div dangerouslySetInnerHTML={content} />
             </div>
         );

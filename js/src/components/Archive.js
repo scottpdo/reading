@@ -11,7 +11,7 @@ class Archive extends React.Component {
     render() {
 
         let posts = this.props.posts.map(post => {
-            return <Post post={post} key={post.id} />;
+            return <Post post={post} showLink={post.opts.showLink} key={post.id} />;
         });
 
         return (
