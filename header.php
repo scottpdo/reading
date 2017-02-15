@@ -3,9 +3,16 @@
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="<?php echo bloginfo('stylesheet_url'); ?>"
+    <link rel="stylesheet" href="<?php echo bloginfo('stylesheet_url'); ?>">
+
+    <script>
+    window.CONFIG = {
+        user: {
+            loggedIn: '<?= is_user_logged_in(); ?>'
+        }
+    };
+    </script>
 </head>
 
 <body>
-    <?php check_logged_in(); ?>
     <div id="main">
