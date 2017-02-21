@@ -16,3 +16,6 @@
 
 <body>
     <div id="main">
+
+    <h1><a href="<?php echo home_url(); ?>"><?php bloginfo('site_title'); ?></a></h1>
+    <?php if (is_home()) : wp_nav_menu('Primary'); endif; ?>

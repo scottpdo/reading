@@ -1,10 +1,6 @@
 <?php
-function check_logged_in() {
-    if (!is_user_logged_in() ) {
-        echo "</body></html>";
-        exit;
-    }
-}
+
+register_nav_menu('primary', 'Primary');
 
 function post_script_tag($opts = array()) {
     $content = get_the_content();
