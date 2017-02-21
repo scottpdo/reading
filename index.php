@@ -5,6 +5,7 @@
         the_post();
 
         post_script_tag(array(
+            'excerpt' => true,
             'showLink' => true
         ));
     }

@@ -23,7 +23,7 @@ class Post extends React.Component {
     }
 
     update(e) {
-        
+
     }
 
     render() {
@@ -41,7 +41,7 @@ class Post extends React.Component {
                 null);
 
         let content = {
-            __html: post.content
+            __html: post.opts.excerpt ? post.excerpt : post.content
         };
 
         let tags = post.tags.map((tag, i) => {
