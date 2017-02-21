@@ -15,8 +15,6 @@ post_script_tag(array(
 
 ?>
 
-<p><a href="<?= home_url(); ?>">Home</a></p>
-
 <div id="archive"></div>
 
 <?php get_footer(); ?>
