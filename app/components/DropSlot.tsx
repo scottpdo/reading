@@ -5,6 +5,9 @@ interface DropSlotProps {
   letter: Letter | null;
   slotIndex: SlotIndex;
   isHighlighted: boolean;
+  isActive: boolean;
+  showError: boolean;
+  isLocked: boolean;
   onDragStart: (letter: Letter) => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent, slotIndex: SlotIndex) => void;
@@ -19,6 +22,9 @@ export function DropSlot({
   letter,
   slotIndex,
   isHighlighted,
+  isActive,
+  showError,
+  isLocked,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -36,10 +42,14 @@ export function DropSlot({
       onDrop={(e) => onDrop(e, slotIndex)}
       className={`
         w-20 h-20 rounded-lg flex items-center justify-center
-        border-4 transition-all
+        border-4 transition-all duration-300
         ${
-          isHighlighted
+          showError
+            ? "border-solid border-red-500 bg-red-500/20 animate-shake"
+            : isHighlighted
             ? "border-dashed border-yellow-400 bg-yellow-400/10"
+            : isActive && !letter
+            ? "border-dashed border-blue-400 bg-blue-400/10 animate-pulse"
             : "border-solid border-gray-600 bg-gray-800"
         }
       `}
@@ -47,6 +57,7 @@ export function DropSlot({
       {letter && (
         <DraggableLetter
           letter={letter}
+          isLocked={isLocked}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
           onTouchStart={onTouchStart}

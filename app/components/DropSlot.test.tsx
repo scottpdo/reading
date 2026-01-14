@@ -21,6 +21,9 @@ describe("DropSlot", () => {
         letter={null}
         slotIndex={0 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -36,6 +39,9 @@ describe("DropSlot", () => {
         letter="A"
         slotIndex={0 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -49,6 +55,9 @@ describe("DropSlot", () => {
         letter={null}
         slotIndex={2 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -79,6 +88,9 @@ describe("DropSlot", () => {
         letter={null}
         slotIndex={0 as SlotIndex}
         isHighlighted={true}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -147,6 +159,9 @@ describe("DropSlot", () => {
         letter={null}
         slotIndex={2 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -165,6 +180,9 @@ describe("DropSlot", () => {
         letter="B"
         slotIndex={0 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );
@@ -179,6 +197,9 @@ describe("DropSlot", () => {
         letter="C"
         slotIndex={0 as SlotIndex}
         isHighlighted={false}
+        isActive={false}
+        showError={false}
+        isLocked={false}
         {...mockHandlers}
       />
     );

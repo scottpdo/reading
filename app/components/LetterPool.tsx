@@ -27,9 +27,9 @@ export function LetterPool({
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
     >
-      {letters.map((letter) => (
+      {letters.map((letter, index) => (
         <DraggableLetter
-          key={letter}
+          key={`${letter}-${index}`}
           letter={letter}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
