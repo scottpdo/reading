@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "generate-audio": "node scripts/generate-audio.js"
   },
   "dependencies": {
     "next": "^15",
@@ -17,6 +18,8 @@
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@deepgram/sdk": "^4.11.3",
+    "dotenv": "^17.2.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",

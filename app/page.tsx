@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLetterGameLogic } from "./hooks/useLetterGameLogic";
 import { useDragAndDropMechanics } from "./hooks/useDragAndDropMechanics";
 import { LetterPool } from "./components/LetterPool";
@@ -11,6 +11,9 @@ import { WinModal } from "./components/WinModal";
 import { SlotIndex, Letter } from "./types/game";
 
 export default function Home() {
+  // Game started state
+  const [hasStarted, setHasStarted] = useState(false);
+
   // Game logic hook
   const gameLogic = useLetterGameLogic();
 
@@ -20,11 +23,77 @@ export default function Home() {
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Audio refs
+  const introAudioRef = useRef<HTMLAudioElement | null>(null);
+  const wordAudioRef = useRef<HTMLAudioElement | null>(null);
+  const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const fanfareAudioRef = useRef<HTMLAudioElement | null>(null);
+  const errorAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Get current word as string for audio filename
+  const currentWordString = gameLogic.currentWord.join("").toLowerCase();
+
+  // Update word audio source when word changes
+  useEffect(() => {
+    if (wordAudioRef.current) {
+      wordAudioRef.current.src = `/audio/words/${currentWordString}.mp3`;
+      wordAudioRef.current.load();
+    }
+  }, [currentWordString]);
+
+  // Play audio sequence when word changes (only after game has started)
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    const playAudioSequence = async () => {
+      try {
+        // Play "now spell the word" first
+        if (introAudioRef.current) {
+          await introAudioRef.current.play();
+          // Wait for intro to finish
+          await new Promise((resolve) => {
+            if (introAudioRef.current) {
+              introAudioRef.current.onended = resolve;
+            }
+          });
+        }
+
+        // Then play the word audio
+        if (wordAudioRef.current) {
+          await wordAudioRef.current.play();
+        }
+      } catch (error) {
+        console.error("Error playing audio:", error);
+      }
+    };
+
+    playAudioSequence();
+  }, [gameLogic.gameState.currentWordIndex, hasStarted]);
+
+  // Play fanfare when game is complete
+  useEffect(() => {
+    if (gameLogic.gameState.isGameComplete && fanfareAudioRef.current) {
+      fanfareAudioRef.current.currentTime = 0;
+      fanfareAudioRef.current.play().catch(err => console.error("Error playing fanfare sound:", err));
+    }
+  }, [gameLogic.gameState.isGameComplete]);
+
+  // Handle start button click
+  const handleStart = () => {
+    setHasStarted(true);
+  };
+
   // Drop handler for drag mechanics
   const handleDropAttempt = (letter: Letter, targetSlot: SlotIndex) => {
     const result = gameLogic.attemptPlacement(letter, targetSlot);
 
     if (!result.success) {
+      // Play error sound
+      if (errorAudioRef.current) {
+        errorAudioRef.current.currentTime = 0;
+        errorAudioRef.current.play().catch(err => console.error("Error playing error sound:", err));
+      }
+
       // Clear previous error timeout
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
 
@@ -37,6 +106,12 @@ export default function Home() {
 
     // Success handling
     if (result.type === 'word-completed') {
+      // Always play chime for word completion (including word 10)
+      if (chimeAudioRef.current) {
+        chimeAudioRef.current.currentTime = 0;
+        chimeAudioRef.current.play().catch(err => console.error("Error playing chime sound:", err));
+      }
+
       setShowSuccess(true);
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
       successTimeoutRef.current = setTimeout(() => {
@@ -62,6 +137,53 @@ export default function Home() {
     setShowSuccess(false);
     gameLogic.resetGame();
   };
+
+  // Show start screen if game hasn't started
+  if (!hasStarted) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-4 bg-gray-900">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-white mb-8">Spell the Words</h1>
+          <p className="text-2xl text-gray-300 mb-12">
+            Listen and spell simple three-letter words
+          </p>
+          <button
+            onClick={handleStart}
+            className="px-12 py-6 bg-blue-600 text-white text-3xl font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            Start Game
+          </button>
+        </div>
+
+        {/* Hidden audio elements (preload) */}
+        <audio
+          ref={introAudioRef}
+          src="/audio/words/now-spell-the-word.mp3"
+          preload="auto"
+        />
+        <audio
+          ref={wordAudioRef}
+          src={`/audio/words/${currentWordString}.mp3`}
+          preload="auto"
+        />
+        <audio
+          ref={chimeAudioRef}
+          src="/audio/effects/chime.mp3"
+          preload="auto"
+        />
+        <audio
+          ref={fanfareAudioRef}
+          src="/audio/effects/fanfare.mp3"
+          preload="auto"
+        />
+        <audio
+          ref={errorAudioRef}
+          src="/audio/effects/error.mp3"
+          preload="auto"
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4 bg-gray-900">
@@ -115,6 +237,33 @@ export default function Home() {
       <WinModal
         isOpen={gameLogic.gameState.isGameComplete}
         onRestart={resetGame}
+      />
+
+      {/* Hidden audio elements */}
+      <audio
+        ref={introAudioRef}
+        src="/audio/words/now-spell-the-word.mp3"
+        preload="auto"
+      />
+      <audio
+        ref={wordAudioRef}
+        src={`/audio/words/${currentWordString}.mp3`}
+        preload="auto"
+      />
+      <audio
+        ref={chimeAudioRef}
+        src="/audio/effects/chime.mp3"
+        preload="auto"
+      />
+      <audio
+        ref={fanfareAudioRef}
+        src="/audio/effects/fanfare.mp3"
+        preload="auto"
+      />
+      <audio
+        ref={errorAudioRef}
+        src="/audio/effects/error.mp3"
+        preload="auto"
       />
     </main>
   );
