@@ -4,24 +4,26 @@ import { Letter, SlotIndex, TouchPosition, DropHandler, CanDragFrom } from "../t
 interface UseDragAndDropMechanicsProps {
   onDrop: DropHandler;
   canDragFrom: CanDragFrom;
+  activeSlot: SlotIndex; // The currently active slot for placement
 }
 
 export function useDragAndDropMechanics({
   onDrop,
-  canDragFrom
+  canDragFrom,
+  activeSlot
 }: UseDragAndDropMechanicsProps) {
   const [draggingLetter, setDraggingLetter] = useState<Letter | null>(null);
-  const [dragOverSlot, setDragOverSlot] = useState<SlotIndex | null>(null);
+  const [isDragOverContainer, setIsDragOverContainer] = useState<boolean>(false);
   const [touchPosition, setTouchPosition] = useState<TouchPosition | null>(null);
 
   const clearDragState = () => {
     setDraggingLetter(null);
-    setDragOverSlot(null);
+    setIsDragOverContainer(false);
     setTouchPosition(null);
   };
 
-  // Consolidated drop processing logic
-  const processDrop = (letter: Letter, targetSlot: SlotIndex) => {
+  // Consolidated drop processing logic - always drops to active slot
+  const processDrop = (letter: Letter) => {
     if (!letter) return;
 
     // Check if can drag from source
@@ -30,8 +32,8 @@ export function useDragAndDropMechanics({
       return;
     }
 
-    // Attempt drop via callback
-    onDrop(letter, targetSlot);
+    // Always attempt drop to active slot
+    onDrop(letter, activeSlot);
 
     // Always clear drag state (caller handles UI feedback)
     clearDragState();
@@ -45,19 +47,20 @@ export function useDragAndDropMechanics({
     clearDragState();
   };
 
-  const handleDragOver = (e: React.DragEvent, slotIndex: SlotIndex) => {
+  // Container-level drag handlers
+  const handleContainerDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOverSlot(slotIndex);
+    setIsDragOverContainer(true);
   };
 
-  const handleDragLeave = () => {
-    setDragOverSlot(null);
+  const handleContainerDragLeave = () => {
+    setIsDragOverContainer(false);
   };
 
-  const handleDrop = (e: React.DragEvent, targetSlotIndex: SlotIndex) => {
+  const handleContainerDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggingLetter) return;
-    processDrop(draggingLetter, targetSlotIndex);
+    processDrop(draggingLetter);
   };
 
   const handleDropToAvailable = (e: React.DragEvent) => {
@@ -76,18 +79,14 @@ export function useDragAndDropMechanics({
     const touch = e.touches[0];
     setTouchPosition({ x: touch.clientX, y: touch.clientY });
 
+    // Check if touch is over the drop container
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slotElement = element?.closest("[data-slot-index]");
+    const containerElement = element?.closest("[data-drop-container]");
 
-    if (slotElement) {
-      const slotIndex = parseInt(
-        slotElement.getAttribute("data-slot-index") || "-1"
-      );
-      if (slotIndex >= 0 && slotIndex <= 2) {
-        setDragOverSlot(slotIndex as SlotIndex);
-      }
+    if (containerElement) {
+      setIsDragOverContainer(true);
     } else {
-      setDragOverSlot(null);
+      setIsDragOverContainer(false);
     }
   };
 
@@ -97,26 +96,29 @@ export function useDragAndDropMechanics({
       return;
     }
 
-    if (dragOverSlot === null) {
+    // Only process drop if we're over the container
+    if (!isDragOverContainer) {
       clearDragState();
       return;
     }
 
-    processDrop(draggingLetter, dragOverSlot);
+    processDrop(draggingLetter);
   };
 
   return {
     // State
     draggingLetter,
-    dragOverSlot,
+    isDragOverContainer,
     touchPosition,
 
-    // Mouse handlers
+    // Mouse handlers (for letters)
     handleDragStart,
     handleDragEnd,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
+
+    // Container-level mouse handlers
+    handleContainerDragOver,
+    handleContainerDragLeave,
+    handleContainerDrop,
     handleDropToAvailable,
 
     // Touch handlers

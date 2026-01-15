@@ -49,12 +49,14 @@ describe("DraggableLetter", () => {
     expect(element).toHaveClass("select-none");
   });
 
-  it("should call onDragStart with letter when drag starts", async () => {
-    const user = userEvent.setup();
+  it("should call onDragStart with letter when drag starts", () => {
     render(<DraggableLetter letter="A" {...mockHandlers} />);
 
     const element = screen.getByText("A");
-    await user.pointer({ keys: "[MouseLeft>]", target: element });
+
+    // Simulate dragstart event directly since HTML5 drag API is hard to test
+    const dragStartEvent = new DragEvent("dragstart", { bubbles: true });
+    element.dispatchEvent(dragStartEvent);
 
     expect(mockHandlers.onDragStart).toHaveBeenCalledWith("A");
   });

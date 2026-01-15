@@ -8,14 +8,23 @@ import { DropSlot } from "./components/DropSlot";
 import { FloatingLetter } from "./components/FloatingLetter";
 import { SuccessModal } from "./components/SuccessModal";
 import { WinModal } from "./components/WinModal";
+import { ReplayButton } from "./components/ReplayButton";
 import { SlotIndex, Letter } from "./types/game";
 
 export default function Home() {
   // Game started state
   const [hasStarted, setHasStarted] = useState(false);
 
+  // Track client-side hydration to avoid SSR mismatch
+  const [isMounted, setIsMounted] = useState(false);
+
   // Game logic hook
   const gameLogic = useLetterGameLogic();
+
+  // Set mounted state after hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // UI feedback state (moved from hooks to integration layer)
   const [showError, setShowError] = useState<SlotIndex | null>(null);
@@ -29,6 +38,9 @@ export default function Home() {
   const chimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const fanfareAudioRef = useRef<HTMLAudioElement | null>(null);
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Track if intro audio is playing (to disable replay button)
+  const [isIntroPlaying, setIsIntroPlaying] = useState(false);
 
   // Get current word as string for audio filename
   const currentWordString = gameLogic.currentWord.join("").toLowerCase();
@@ -49,6 +61,7 @@ export default function Home() {
       try {
         // Play "now spell the word" first
         if (introAudioRef.current) {
+          setIsIntroPlaying(true);
           await introAudioRef.current.play();
           // Wait for intro to finish
           await new Promise((resolve) => {
@@ -56,6 +69,7 @@ export default function Home() {
               introAudioRef.current.onended = resolve;
             }
           });
+          setIsIntroPlaying(false);
         }
 
         // Then play the word audio
@@ -64,6 +78,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error playing audio:", error);
+        setIsIntroPlaying(false);
       }
     };
 
@@ -81,6 +96,14 @@ export default function Home() {
   // Handle start button click
   const handleStart = () => {
     setHasStarted(true);
+  };
+
+  // Handle replay audio button click
+  const handleReplayAudio = () => {
+    if (wordAudioRef.current && !isIntroPlaying) {
+      wordAudioRef.current.currentTime = 0;
+      wordAudioRef.current.play().catch(err => console.error("Error replaying word audio:", err));
+    }
   };
 
   // Drop handler for drag mechanics
@@ -126,7 +149,8 @@ export default function Home() {
   // Drag mechanics hook
   const dragMechanics = useDragAndDropMechanics({
     onDrop: handleDropAttempt,
-    canDragFrom: (letter) => !gameLogic.isSlotSource(letter)
+    canDragFrom: (letter) => !gameLogic.isSlotSource(letter),
+    activeSlot: gameLogic.gameState.currentPosition
   });
 
   // Reset wrapper
@@ -155,32 +179,36 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Hidden audio elements (preload) */}
-        <audio
-          ref={introAudioRef}
-          src="/audio/words/now-spell-the-word.mp3"
-          preload="auto"
-        />
-        <audio
-          ref={wordAudioRef}
-          src={`/audio/words/${currentWordString}.mp3`}
-          preload="auto"
-        />
-        <audio
-          ref={chimeAudioRef}
-          src="/audio/effects/chime.mp3"
-          preload="auto"
-        />
-        <audio
-          ref={fanfareAudioRef}
-          src="/audio/effects/fanfare.mp3"
-          preload="auto"
-        />
-        <audio
-          ref={errorAudioRef}
-          src="/audio/effects/error.mp3"
-          preload="auto"
-        />
+        {/* Hidden audio elements (preload) - only render after hydration */}
+        {isMounted && (
+          <>
+            <audio
+              ref={introAudioRef}
+              src="/audio/words/now-spell-the-word.mp3"
+              preload="auto"
+            />
+            <audio
+              ref={wordAudioRef}
+              src={`/audio/words/${currentWordString}.mp3`}
+              preload="auto"
+            />
+            <audio
+              ref={chimeAudioRef}
+              src="/audio/effects/chime.mp3"
+              preload="auto"
+            />
+            <audio
+              ref={fanfareAudioRef}
+              src="/audio/effects/fanfare.mp3"
+              preload="auto"
+            />
+            <audio
+              ref={errorAudioRef}
+              src="/audio/effects/error.mp3"
+              preload="auto"
+            />
+          </>
+        )}
       </main>
     );
   }
@@ -198,26 +226,35 @@ export default function Home() {
           onDrop={dragMechanics.handleDropToAvailable}
         />
 
-        <div className="flex flex-row gap-6 justify-center flex-1 max-w-2xl">
-          {gameLogic.slots.map((letterState, index) => (
-            <DropSlot
-              key={index}
-              letter={letterState?.letter ?? null}
-              slotIndex={index as SlotIndex}
-              isHighlighted={dragMechanics.dragOverSlot === index}
-              isActive={gameLogic.gameState.currentPosition === index}
-              showError={showError === index}
-              isLocked={letterState?.isLocked ?? false}
-              onDragStart={dragMechanics.handleDragStart}
-              onDragEnd={dragMechanics.handleDragEnd}
-              onDragOver={dragMechanics.handleDragOver}
-              onDragLeave={dragMechanics.handleDragLeave}
-              onDrop={dragMechanics.handleDrop}
-              onTouchStart={dragMechanics.handleTouchStart}
-              onTouchMove={dragMechanics.handleTouchMove}
-              onTouchEnd={dragMechanics.handleTouchEnd}
-            />
-          ))}
+        <div className="flex flex-col items-center gap-6 flex-1 max-w-2xl">
+          {/* Drop slots - container is the drop zone */}
+          <div
+            className="flex flex-row gap-6 justify-center"
+            data-drop-container="true"
+            onDragOver={dragMechanics.handleContainerDragOver}
+            onDragLeave={dragMechanics.handleContainerDragLeave}
+            onDrop={dragMechanics.handleContainerDrop}
+          >
+            {gameLogic.slots.map((letterState, index) => (
+              <DropSlot
+                key={index}
+                letter={letterState?.letter ?? null}
+                slotIndex={index as SlotIndex}
+                isHighlighted={dragMechanics.isDragOverContainer && gameLogic.gameState.currentPosition === index}
+                isActive={gameLogic.gameState.currentPosition === index}
+                showError={showError === index}
+                isLocked={letterState?.isLocked ?? false}
+                onDragStart={dragMechanics.handleDragStart}
+                onDragEnd={dragMechanics.handleDragEnd}
+                onTouchStart={dragMechanics.handleTouchStart}
+                onTouchMove={dragMechanics.handleTouchMove}
+                onTouchEnd={dragMechanics.handleTouchEnd}
+              />
+            ))}
+          </div>
+
+          {/* Replay audio button */}
+          <ReplayButton onClick={handleReplayAudio} disabled={isIntroPlaying} />
         </div>
       </div>
 
@@ -239,32 +276,36 @@ export default function Home() {
         onRestart={resetGame}
       />
 
-      {/* Hidden audio elements */}
-      <audio
-        ref={introAudioRef}
-        src="/audio/words/now-spell-the-word.mp3"
-        preload="auto"
-      />
-      <audio
-        ref={wordAudioRef}
-        src={`/audio/words/${currentWordString}.mp3`}
-        preload="auto"
-      />
-      <audio
-        ref={chimeAudioRef}
-        src="/audio/effects/chime.mp3"
-        preload="auto"
-      />
-      <audio
-        ref={fanfareAudioRef}
-        src="/audio/effects/fanfare.mp3"
-        preload="auto"
-      />
-      <audio
-        ref={errorAudioRef}
-        src="/audio/effects/error.mp3"
-        preload="auto"
-      />
+      {/* Hidden audio elements - only render after hydration */}
+      {isMounted && (
+        <>
+          <audio
+            ref={introAudioRef}
+            src="/audio/words/now-spell-the-word.mp3"
+            preload="auto"
+          />
+          <audio
+            ref={wordAudioRef}
+            src={`/audio/words/${currentWordString}.mp3`}
+            preload="auto"
+          />
+          <audio
+            ref={chimeAudioRef}
+            src="/audio/effects/chime.mp3"
+            preload="auto"
+          />
+          <audio
+            ref={fanfareAudioRef}
+            src="/audio/effects/fanfare.mp3"
+            preload="auto"
+          />
+          <audio
+            ref={errorAudioRef}
+            src="/audio/effects/error.mp3"
+            preload="auto"
+          />
+        </>
+      )}
     </main>
   );
 }

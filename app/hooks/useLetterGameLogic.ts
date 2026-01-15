@@ -25,23 +25,51 @@ function shuffleWords(words: CVCWord[]): CVCWord[] {
   return shuffled;
 }
 
+// Vowels and consonants
+const VOWELS: Letter[] = ["A", "E", "I", "O", "U"];
+const CONSONANTS: Letter[] = [
+  "B", "C", "D", "F", "G", "H", "J", "K", "L", "M",
+  "N", "P", "Q", "R", "S", "T", "V", "W", "X", "Y", "Z"
+];
+
+// Check if a letter is a vowel
+function isVowel(letter: Letter): boolean {
+  return VOWELS.includes(letter);
+}
+
 // Generate 2 random letters that aren't the correct one
+// If correct letter is a vowel, ensure at least one distractor is also a vowel
 function getRandomDistractors(correctLetter: Letter): [Letter, Letter] {
-  const allLetters: Letter[] = [
-    "A", "B", "C", "D", "E", "F", "G", "H", "I",
-    "J", "K", "L", "M", "N", "O", "P", "Q", "R",
-    "S", "T", "U", "V", "W", "X", "Y", "Z"
-  ];
+  const correctIsVowel = isVowel(correctLetter);
 
-  const available = allLetters.filter(l => l !== correctLetter);
+  if (correctIsVowel) {
+    // Filter out the correct vowel from available vowels
+    const availableVowels = VOWELS.filter(v => v !== correctLetter);
 
-  // Shuffle and take first 2
-  for (let i = available.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [available[i], available[j]] = [available[j], available[i]];
+    // Pick one random vowel distractor
+    const vowelIndex = Math.floor(Math.random() * availableVowels.length);
+    const vowelDistractor = availableVowels[vowelIndex];
+
+    // Pick one random consonant distractor
+    const consonantIndex = Math.floor(Math.random() * CONSONANTS.length);
+    const consonantDistractor = CONSONANTS[consonantIndex];
+
+    // Randomly order the two distractors
+    return Math.random() < 0.5
+      ? [vowelDistractor, consonantDistractor]
+      : [consonantDistractor, vowelDistractor];
+  } else {
+    // For consonants, pick any 2 letters (excluding the correct one)
+    const allLetters = [...VOWELS, ...CONSONANTS].filter(l => l !== correctLetter);
+
+    // Shuffle and take first 2
+    for (let i = allLetters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+    }
+
+    return [allLetters[0], allLetters[1]];
   }
-
-  return [available[0], available[1]];
 }
 
 export interface PlacementResult {

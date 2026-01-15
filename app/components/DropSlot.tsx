@@ -8,11 +8,9 @@ interface DropSlotProps {
   isActive: boolean;
   showError: boolean;
   isLocked: boolean;
+  // Only letter drag handlers (for letters already placed in slots)
   onDragStart: (letter: Letter) => void;
   onDragEnd: () => void;
-  onDragOver: (e: React.DragEvent, slotIndex: SlotIndex) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent, slotIndex: SlotIndex) => void;
   onTouchStart: (letter: Letter) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
@@ -27,9 +25,6 @@ export function DropSlot({
   isLocked,
   onDragStart,
   onDragEnd,
-  onDragOver,
-  onDragLeave,
-  onDrop,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -37,9 +32,6 @@ export function DropSlot({
   return (
     <div
       data-slot-index={slotIndex}
-      onDragOver={(e) => onDragOver(e, slotIndex)}
-      onDragLeave={onDragLeave}
-      onDrop={(e) => onDrop(e, slotIndex)}
       className={`
         w-20 h-20 rounded-lg flex items-center justify-center
         border-4 transition-all duration-300

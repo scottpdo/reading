@@ -7,9 +7,6 @@ describe("DropSlot", () => {
   const mockHandlers = {
     onDragStart: vi.fn(),
     onDragEnd: vi.fn(),
-    onDragOver: vi.fn(),
-    onDragLeave: vi.fn(),
-    onDrop: vi.fn(),
     onTouchStart: vi.fn(),
     onTouchMove: vi.fn(),
     onTouchEnd: vi.fn(),
@@ -117,62 +114,6 @@ describe("DropSlot", () => {
     expect(slot).toHaveClass("rounded-lg");
   });
 
-  it("should call onDragOver with slot index", () => {
-    const { container } = render(
-      <DropSlot
-        letter={null}
-        slotIndex={1 as SlotIndex}
-        isHighlighted={false}
-        {...mockHandlers}
-      />
-    );
-
-    const slot = container.querySelector('[data-slot-index="1"]');
-    const mockEvent = new Event("dragover", { bubbles: true });
-
-    slot?.dispatchEvent(mockEvent);
-
-    expect(mockHandlers.onDragOver).toHaveBeenCalled();
-  });
-
-  it("should call onDragLeave when drag leaves", () => {
-    const { container } = render(
-      <DropSlot
-        letter={null}
-        slotIndex={0 as SlotIndex}
-        isHighlighted={false}
-        {...mockHandlers}
-      />
-    );
-
-    const slot = container.querySelector('[data-slot-index="0"]');
-    const mockEvent = new Event("dragleave", { bubbles: true });
-
-    slot?.dispatchEvent(mockEvent);
-
-    expect(mockHandlers.onDragLeave).toHaveBeenCalled();
-  });
-
-  it("should call onDrop with slot index", () => {
-    const { container } = render(
-      <DropSlot
-        letter={null}
-        slotIndex={2 as SlotIndex}
-        isHighlighted={false}
-        isActive={false}
-        showError={false}
-        isLocked={false}
-        {...mockHandlers}
-      />
-    );
-
-    const slot = container.querySelector('[data-slot-index="2"]');
-    const mockEvent = new Event("drop", { bubbles: true });
-
-    slot?.dispatchEvent(mockEvent);
-
-    expect(mockHandlers.onDrop).toHaveBeenCalled();
-  });
 
   it("should render letter without box when letter is present", () => {
     render(
