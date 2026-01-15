@@ -90,4 +90,34 @@ describe("LetterPool", () => {
 
     expect(mockHandlers.onTouchStart).toHaveBeenCalledWith("A");
   });
+
+  it("should have transition wrapper with opacity classes", () => {
+    const letters: Letter[] = ["A"];
+    const { container } = render(<LetterPool letters={letters} {...mockHandlers} />);
+
+    const transitionWrapper = container.querySelector('.transition-opacity');
+    expect(transitionWrapper).toBeInTheDocument();
+    expect(transitionWrapper).toHaveClass('duration-300');
+  });
+
+  it("should update displayed letters when letters prop changes", async () => {
+    const letters: Letter[] = ["A", "B", "C"];
+    const { rerender } = render(<LetterPool letters={letters} {...mockHandlers} />);
+
+    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.getByText("C")).toBeInTheDocument();
+
+    // Change letters
+    const newLetters: Letter[] = ["D", "E", "F"];
+    rerender(<LetterPool letters={newLetters} {...mockHandlers} />);
+
+    // After transition, new letters should be displayed
+    // Note: In real usage there's a 150ms delay, but test will see the eventual state
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    expect(screen.getByText("D")).toBeInTheDocument();
+    expect(screen.getByText("E")).toBeInTheDocument();
+    expect(screen.getByText("F")).toBeInTheDocument();
+  });
 });
