@@ -25,6 +25,9 @@ const CONSONANTS: Letter[] = [
   "N", "P", "Q", "R", "S", "T", "V", "W", "X", "Y", "Z"
 ];
 
+// Visually similar letters (in lowercase: b, p, d, q look similar)
+const VISUALLY_SIMILAR_LETTERS: Letter[] = ["B", "P", "D", "Q"];
+
 // Check if a letter is a vowel
 function isVowel(letter: Letter): boolean {
   return VOWELS.includes(letter);
@@ -32,10 +35,31 @@ function isVowel(letter: Letter): boolean {
 
 // Generate 2 random letters that aren't the correct one
 // If correct letter is a vowel, ensure at least one distractor is also a vowel
+// If correct letter is one of b/p/d/q, ensure one distractor is from that visually similar group
 function getRandomDistractors(correctLetter: Letter): [Letter, Letter] {
   const correctIsVowel = isVowel(correctLetter);
+  const correctIsVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
 
-  if (correctIsVowel) {
+  if (correctIsVisuallySimilar) {
+    // Filter out the correct letter from the visually similar group
+    const availableSimilar = VISUALLY_SIMILAR_LETTERS.filter(l => l !== correctLetter);
+
+    // Pick one random visually similar distractor
+    const similarIndex = Math.floor(Math.random() * availableSimilar.length);
+    const similarDistractor = availableSimilar[similarIndex];
+
+    // Pick one random distractor from all letters (excluding correct and already-picked similar)
+    const allOtherLetters = [...VOWELS, ...CONSONANTS].filter(
+      l => l !== correctLetter && l !== similarDistractor
+    );
+    const otherIndex = Math.floor(Math.random() * allOtherLetters.length);
+    const otherDistractor = allOtherLetters[otherIndex];
+
+    // Randomly order the two distractors
+    return Math.random() < 0.5
+      ? [similarDistractor, otherDistractor]
+      : [otherDistractor, similarDistractor];
+  } else if (correctIsVowel) {
     // Filter out the correct vowel from available vowels
     const availableVowels = VOWELS.filter(v => v !== correctLetter);
 
@@ -52,7 +76,7 @@ function getRandomDistractors(correctLetter: Letter): [Letter, Letter] {
       ? [vowelDistractor, consonantDistractor]
       : [consonantDistractor, vowelDistractor];
   } else {
-    // For consonants, pick any 2 letters (excluding the correct one)
+    // For other consonants, pick any 2 letters (excluding the correct one)
     const allLetters = [...VOWELS, ...CONSONANTS].filter(l => l !== correctLetter);
 
     // Shuffle and take first 2
