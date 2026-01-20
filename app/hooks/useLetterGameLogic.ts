@@ -48,9 +48,9 @@ function getRandomDistractors(correctLetter: Letter): [Letter, Letter] {
     const similarIndex = Math.floor(Math.random() * availableSimilar.length);
     const similarDistractor = availableSimilar[similarIndex];
 
-    // Pick one random distractor from all letters (excluding correct and already-picked similar)
+    // Pick one random distractor from all letters (excluding ALL visually similar letters)
     const allOtherLetters = [...VOWELS, ...CONSONANTS].filter(
-      l => l !== correctLetter && l !== similarDistractor
+      l => !VISUALLY_SIMILAR_LETTERS.includes(l)
     );
     const otherIndex = Math.floor(Math.random() * allOtherLetters.length);
     const otherDistractor = allOtherLetters[otherIndex];

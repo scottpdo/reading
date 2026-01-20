@@ -185,6 +185,244 @@ describe("useLetterGameLogic", () => {
     });
   });
 
+  describe("Visually Similar Letter Distractor Logic (b/p/d/q)", () => {
+    const VISUALLY_SIMILAR_LETTERS: Letter[] = ["B", "P", "D", "Q"];
+    const vowels: Letter[] = ["A", "E", "I", "O", "U"];
+
+    it("should provide at least one visually similar distractor when correct letter is b/p/d/q", () => {
+      const { result } = renderHook(() => useLetterGameLogic());
+
+      const testRuns = 50;
+      let similarLetterPositionCount = 0;
+
+      for (let run = 0; run < testRuns; run++) {
+        act(() => {
+          result.current.resetGame();
+        });
+
+        // Check each position in the word
+        for (let position = 0; position < 3; position++) {
+          const currentWord = result.current.currentWord;
+          const correctLetter = currentWord[result.current.gameState.currentPosition];
+
+          // Check if correct letter is one of the visually similar letters
+          const isVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
+
+          if (isVisuallySimilar) {
+            similarLetterPositionCount++;
+            const availableLetters = result.current.availableLetters;
+
+            // Filter out the correct letter to get distractors
+            const distractors = availableLetters.filter(l => l !== correctLetter);
+
+            // Count how many of the distractors are from the visually similar group
+            const similarDistractors = distractors.filter(l =>
+              VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+
+            // Should have at least one visually similar distractor
+            expect(similarDistractors.length).toBeGreaterThanOrEqual(1);
+          }
+
+          // Advance to next position if not at the end
+          if (position < 2) {
+            act(() => {
+              result.current.attemptPlacement(correctLetter, result.current.gameState.currentPosition);
+            });
+          }
+        }
+      }
+
+      // Sanity check: we should have tested some visually similar letter positions
+      expect(similarLetterPositionCount).toBeGreaterThan(0);
+    });
+
+    it("should provide exactly one similar letter and one other distractor for b/p/d/q", () => {
+      const { result } = renderHook(() => useLetterGameLogic());
+
+      const testRuns = 50;
+
+      for (let run = 0; run < testRuns; run++) {
+        act(() => {
+          result.current.resetGame();
+        });
+
+        // Check all three positions
+        for (let position = 0; position < 3; position++) {
+          const currentWord = result.current.currentWord;
+          const correctLetter = currentWord[result.current.gameState.currentPosition];
+          const isVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
+
+          if (isVisuallySimilar) {
+            const availableLetters = result.current.availableLetters;
+
+            // Filter out the correct letter to get just distractors
+            const distractors = availableLetters.filter(l => l !== correctLetter);
+
+            // Count similar and other distractors
+            const similarDistractors = distractors.filter(l =>
+              VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+            const otherDistractors = distractors.filter(l =>
+              !VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+
+            // Should have exactly 1 similar letter and 1 other distractor
+            expect(similarDistractors.length).toBe(1);
+            expect(otherDistractors.length).toBe(1);
+            expect(distractors.length).toBe(2);
+          }
+
+          // Advance to next position
+          if (position < 2) {
+            act(() => {
+              result.current.attemptPlacement(correctLetter, result.current.gameState.currentPosition);
+            });
+          }
+        }
+      }
+    });
+
+    it("should not duplicate the correct similar letter in distractors", () => {
+      const { result } = renderHook(() => useLetterGameLogic());
+
+      const testRuns = 50;
+
+      for (let run = 0; run < testRuns; run++) {
+        act(() => {
+          result.current.resetGame();
+        });
+
+        for (let position = 0; position < 3; position++) {
+          const currentWord = result.current.currentWord;
+          const correctLetter = currentWord[result.current.gameState.currentPosition];
+          const isVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
+
+          if (isVisuallySimilar) {
+            const availableLetters = result.current.availableLetters;
+            const distractors = availableLetters.filter(l => l !== correctLetter);
+
+            // Correct letter should not appear in distractors
+            expect(distractors).not.toContain(correctLetter);
+
+            // Check that the similar distractor is different from correct letter
+            const similarDistractors = distractors.filter(l =>
+              VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+            similarDistractors.forEach(distractor => {
+              expect(distractor).not.toBe(correctLetter);
+            });
+          }
+
+          if (position < 2) {
+            act(() => {
+              result.current.attemptPlacement(correctLetter, result.current.gameState.currentPosition);
+            });
+          }
+        }
+      }
+    });
+
+    it("should select similar distractor from the remaining three letters (B/P/D/Q)", () => {
+      const { result } = renderHook(() => useLetterGameLogic());
+
+      const testRuns = 100;
+      const similarDistractorCounts: Record<string, Set<Letter>> = {
+        "B": new Set(),
+        "P": new Set(),
+        "D": new Set(),
+        "Q": new Set()
+      };
+
+      for (let run = 0; run < testRuns; run++) {
+        act(() => {
+          result.current.resetGame();
+        });
+
+        for (let position = 0; position < 3; position++) {
+          const currentWord = result.current.currentWord;
+          const correctLetter = currentWord[result.current.gameState.currentPosition];
+          const isVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
+
+          if (isVisuallySimilar) {
+            const availableLetters = result.current.availableLetters;
+            const distractors = availableLetters.filter(l => l !== correctLetter);
+
+            // Find the similar distractor
+            const similarDistractor = distractors.find(l =>
+              VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+
+            if (similarDistractor) {
+              // Track which similar letters appear as distractors for each correct letter
+              similarDistractorCounts[correctLetter].add(similarDistractor);
+
+              // Verify the similar distractor is one of the other three
+              const expectedOptions = VISUALLY_SIMILAR_LETTERS.filter(l => l !== correctLetter);
+              expect(expectedOptions).toContain(similarDistractor);
+            }
+          }
+
+          if (position < 2) {
+            act(() => {
+              result.current.attemptPlacement(correctLetter, result.current.gameState.currentPosition);
+            });
+          }
+        }
+      }
+
+      // Over many runs, we should see variety in which similar letters are chosen
+      // (Each correct letter should have seen different similar distractors)
+      Object.entries(similarDistractorCounts).forEach(([correctLetter, distractors]) => {
+        if (distractors.size > 0) {
+          // Each distractor should be from the remaining three similar letters
+          distractors.forEach(distractor => {
+            expect(VISUALLY_SIMILAR_LETTERS).toContain(distractor);
+            expect(distractor).not.toBe(correctLetter);
+          });
+        }
+      });
+    });
+
+    it("should prioritize visually similar distractors over vowel distractors", () => {
+      const { result } = renderHook(() => useLetterGameLogic());
+
+      const testRuns = 50;
+
+      for (let run = 0; run < testRuns; run++) {
+        act(() => {
+          result.current.resetGame();
+        });
+
+        for (let position = 0; position < 3; position++) {
+          const currentWord = result.current.currentWord;
+          const correctLetter = currentWord[result.current.gameState.currentPosition];
+          const isVisuallySimilar = VISUALLY_SIMILAR_LETTERS.includes(correctLetter);
+
+          if (isVisuallySimilar) {
+            const availableLetters = result.current.availableLetters;
+            const distractors = availableLetters.filter(l => l !== correctLetter);
+
+            // Count similar distractors
+            const similarDistractors = distractors.filter(l =>
+              VISUALLY_SIMILAR_LETTERS.includes(l)
+            );
+
+            // Even though b/p/d/q are consonants, the similar letter logic
+            // should take priority, so we should always have exactly 1 similar distractor
+            expect(similarDistractors.length).toBe(1);
+          }
+
+          if (position < 2) {
+            act(() => {
+              result.current.attemptPlacement(correctLetter, result.current.gameState.currentPosition);
+            });
+          }
+        }
+      }
+    });
+  });
+
   describe("Basic Game Logic", () => {
     it("should initialize with a shuffled word bank", () => {
       const { result } = renderHook(() => useLetterGameLogic());
