@@ -9,11 +9,15 @@ import { FloatingLetter } from "./components/FloatingLetter";
 import { SuccessModal } from "./components/SuccessModal";
 import { WinModal } from "./components/WinModal";
 import { ReplayButton } from "./components/ReplayButton";
+import { CaseToggleButton } from "./components/CaseToggleButton";
 import { SlotIndex, Letter } from "./types/game";
 
 export default function Home() {
   // Game started state
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Letter case state
+  const [isUppercase, setIsUppercase] = useState(true);
 
   // Track client-side hydration to avoid SSR mismatch
   const [isMounted, setIsMounted] = useState(false);
@@ -104,6 +108,11 @@ export default function Home() {
       wordAudioRef.current.currentTime = 0;
       wordAudioRef.current.play().catch(err => console.error("Error replaying word audio:", err));
     }
+  };
+
+  // Handle case toggle button click
+  const handleCaseToggle = () => {
+    setIsUppercase(prev => !prev);
   };
 
   // Drop handler for drag mechanics
@@ -216,15 +225,17 @@ export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4 bg-gray-900">
       <div className="w-full max-w-4xl h-[80vh] flex items-center justify-between gap-8 px-8">
-        <LetterPool
-          letters={gameLogic.availableLetters}
-          onDragStart={dragMechanics.handleDragStart}
-          onDragEnd={dragMechanics.handleDragEnd}
-          onTouchStart={dragMechanics.handleTouchStart}
-          onTouchMove={dragMechanics.handleTouchMove}
-          onTouchEnd={dragMechanics.handleTouchEnd}
-          onDrop={dragMechanics.handleDropToAvailable}
-        />
+        <div style={{ textTransform: isUppercase ? 'uppercase' : 'lowercase' }}>
+          <LetterPool
+            letters={gameLogic.availableLetters}
+            onDragStart={dragMechanics.handleDragStart}
+            onDragEnd={dragMechanics.handleDragEnd}
+            onTouchStart={dragMechanics.handleTouchStart}
+            onTouchMove={dragMechanics.handleTouchMove}
+            onTouchEnd={dragMechanics.handleTouchEnd}
+            onDrop={dragMechanics.handleDropToAvailable}
+          />
+        </div>
 
         <div className="flex flex-col items-center gap-6 flex-1 max-w-2xl">
           {/* Drop slots - container is the drop zone */}
@@ -234,6 +245,7 @@ export default function Home() {
             onDragOver={dragMechanics.handleContainerDragOver}
             onDragLeave={dragMechanics.handleContainerDragLeave}
             onDrop={dragMechanics.handleContainerDrop}
+            style={{ textTransform: isUppercase ? 'uppercase' : 'lowercase' }}
           >
             {gameLogic.slots.map((letterState, index) => (
               <DropSlot
@@ -252,17 +264,22 @@ export default function Home() {
               />
             ))}
           </div>
-
-          {/* Replay audio button */}
-          <ReplayButton onClick={handleReplayAudio} disabled={isIntroPlaying} />
         </div>
       </div>
 
+      {/* Control buttons - fixed position in lower-right */}
+      <div className="fixed bottom-8 right-8 flex gap-4">
+        <ReplayButton onClick={handleReplayAudio} disabled={isIntroPlaying} />
+        <CaseToggleButton isUppercase={isUppercase} onClick={handleCaseToggle} />
+      </div>
+
       {dragMechanics.touchPosition && dragMechanics.draggingLetter && (
-        <FloatingLetter
-          letter={dragMechanics.draggingLetter}
-          position={dragMechanics.touchPosition}
-        />
+        <div style={{ textTransform: isUppercase ? 'uppercase' : 'lowercase' }}>
+          <FloatingLetter
+            letter={dragMechanics.draggingLetter}
+            position={dragMechanics.touchPosition}
+          />
+        </div>
       )}
 
       <SuccessModal

@@ -64,9 +64,11 @@ export default function AudioCheckPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const loadAudioFiles = async () => {
+  const loadAudioFiles = async (showLoadingScreen = true) => {
     try {
-      setLoading(true);
+      if (showLoadingScreen) {
+        setLoading(true);
+      }
       const response = await fetch("/api/audio/list");
       const data = await response.json();
 
@@ -79,7 +81,9 @@ export default function AudioCheckPage() {
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
+      if (showLoadingScreen) {
+        setLoading(false);
+      }
     }
   };
 
@@ -106,8 +110,8 @@ export default function AudioCheckPage() {
         throw new Error(data.error || "Failed to delete file");
       }
 
-      // Refresh the list
-      await loadAudioFiles();
+      // Refresh the list without loading screen
+      await loadAudioFiles(false);
     } catch (err) {
       alert(`Error: ${(err as Error).message}`);
     }
@@ -139,8 +143,8 @@ export default function AudioCheckPage() {
       // Wait a moment for file to be written
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Refresh the list
-      await loadAudioFiles();
+      // Refresh the list without loading screen
+      await loadAudioFiles(false);
 
       // If this file is currently playing, reload the audio
       if (playingFile === file.name) {
@@ -208,8 +212,8 @@ export default function AudioCheckPage() {
       setNewText("");
       setNewVoice("aura-2-thalia-en");
 
-      // Refresh the list
-      await loadAudioFiles();
+      // Refresh the list without loading screen
+      await loadAudioFiles(false);
     } catch (err) {
       alert(`Error: ${(err as Error).message}`);
     } finally {

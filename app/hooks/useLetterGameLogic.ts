@@ -1,19 +1,6 @@
 import { useState, useEffect } from "react";
 import { Letter, SlotIndex, CVCWord, LetterState } from "../types/game";
-
-// Word bank constant
-const CVC_WORDS: CVCWord[] = [
-  ["C", "A", "T"],
-  ["D", "O", "G"],
-  ["B", "A", "T"],
-  ["R", "A", "T"],
-  ["P", "I", "G"],
-  ["B", "U", "G"],
-  ["S", "U", "N"],
-  ["R", "U", "N"],
-  ["P", "E", "N"],
-  ["H", "E", "N"],
-];
+import { CVC_WORDS } from "../data/cvcWords";
 
 // Shuffle function using Fisher-Yates algorithm
 function shuffleWords(words: CVCWord[]): CVCWord[] {
@@ -23,6 +10,12 @@ function shuffleWords(words: CVCWord[]): CVCWord[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+// Select random words from the master list
+function selectRandomWords(allWords: CVCWord[], count: number): CVCWord[] {
+  const shuffled = shuffleWords(allWords);
+  return shuffled.slice(0, count);
 }
 
 // Vowels and consonants
@@ -87,11 +80,11 @@ interface GameLogicState {
 }
 
 export function useLetterGameLogic() {
-  // Initialize shuffled word bank once on mount
+  // Initialize with 10 random words from the master list
   const [gameState, setGameState] = useState<GameLogicState>(() => {
-    const shuffled = shuffleWords(CVC_WORDS);
+    const selectedWords = selectRandomWords(CVC_WORDS, 10);
     return {
-      wordBank: shuffled,
+      wordBank: selectedWords,
       currentWordIndex: 0,
       currentPosition: 0 as SlotIndex,
       completedWords: 0,
@@ -213,11 +206,11 @@ export function useLetterGameLogic() {
     }
   };
 
-  // Reset game
+  // Reset game with new random selection
   const resetGame = () => {
-    const shuffled = shuffleWords(CVC_WORDS);
+    const selectedWords = selectRandomWords(CVC_WORDS, 10);
     setGameState({
-      wordBank: shuffled,
+      wordBank: selectedWords,
       currentWordIndex: 0,
       currentPosition: 0 as SlotIndex,
       completedWords: 0,
